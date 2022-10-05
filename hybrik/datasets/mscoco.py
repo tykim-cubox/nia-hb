@@ -13,7 +13,6 @@ from pycocotools.coco import COCO
 
 class Mscoco(data.Dataset):
     """ COCO Person dataset.
-
     Parameters
     ----------
     ann_file: str,
@@ -133,7 +132,7 @@ class Mscoco(data.Dataset):
             _coco = COCO(self._ann_file)
             try:
                 with open(self._ann_file + '.pkl', 'wb') as fid:
-                    pk.dump(_coco, fid, pk.HIGHEST_PROTOCOL)
+                    pk.dump(_coco, fid)#, pk.HIGHEST_PROTOCOL)
             except Exception as e:
                 print(e)
                 print('Skip writing to .pkl file.')
@@ -148,7 +147,7 @@ class Mscoco(data.Dataset):
             items, labels = self._load_jsons()
             try:
                 with open(self._ann_file + '_annot_keypoint.pkl', 'wb') as fid:
-                    pk.dump((items, labels), fid, pk.HIGHEST_PROTOCOL)
+                    pk.dump((items, labels))#, fid, pk.HIGHEST_PROTOCOL)
             except Exception as e:
                 print(e)
                 print('Skip writing to .pkl file.')

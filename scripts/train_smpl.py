@@ -8,7 +8,7 @@ import numpy as np
 import torch
 import torch.multiprocessing as mp
 import torch.utils.data
-from hybrik.datasets import MixDataset, PW3D
+from hybrik.datasets import MixDataset, PW3D, H36NIADataset, H36MCoCoDataset, H36MDataset, NIA3DMixDataset
 from hybrik.models import builder
 from hybrik.opt import cfg, logger, opt
 from hybrik.utils.env import init_dist
@@ -286,9 +286,24 @@ def main_worker(gpu, opt, cfg):
         writer = SummaryWriter('.tensorboard/{}/{}-{}'.format(cfg.DATASET.DATASET, cfg.FILE_NAME, opt.exp_id))
     else:
         writer = None
-
+    print(cfg.DATASET.DATASET)
     if cfg.DATASET.DATASET == 'mix_smpl':
         train_dataset = MixDataset(
+            cfg=cfg,
+            train=True)
+    elif cfg.DATASET.DATASET == 'mix_smpl_h36m_coco':
+        train_dataset = H36MCoCoDataset(
+            cfg=cfg,
+            train=True)
+    elif cfg.DATASET.DATASET ==  'h36m_single':
+        train_dataset = H36MDataset(
+            cfg=cfg,
+            train=True)
+    elif cfg.DATASET.DATASET ==  'mix_nia3d_smpl_cam':
+        train_dataset = NIA3DMixDataset(cfg=cfg,train=True)
+        
+    elif cfg.DATASET.DATASET == 'mix_smpl_h36m_nia2d':
+        train_dataset = H36NIADataset(
             cfg=cfg,
             train=True)
     else:
@@ -301,7 +316,7 @@ def main_worker(gpu, opt, cfg):
     train_loader = torch.utils.data.DataLoader(
         train_dataset, batch_size=cfg.TRAIN.BATCH_SIZE, shuffle=(train_sampler is None), num_workers=opt.nThreads, sampler=train_sampler, worker_init_fn=_init_fn)
 
-    # gt val dataset
+    
     gt_val_dataset_h36m = MixDataset(
         cfg=cfg,
         train=False)
@@ -334,18 +349,18 @@ def main_worker(gpu, opt, cfg):
                 # Save checkpoint
                 torch.save(m.module.state_dict(), './exp/{}/{}-{}/model_{}.pth'.format(cfg.DATASET.DATASET, cfg.FILE_NAME, opt.exp_id, opt.epoch))
             # Prediction Test
-            with torch.no_grad():
-                gt_tot_err_h36m = validate_gt(m, opt, cfg, gt_val_dataset_h36m, heatmap_to_coord)
-                gt_tot_err_3dpw = validate_gt(m, opt, cfg, gt_val_dataset_3dpw, heatmap_to_coord)
-                if opt.log:
-                    if gt_tot_err_h36m <= best_err_h36m:
-                        best_err_h36m = gt_tot_err_h36m
-                        torch.save(m.module.state_dict(), './exp/{}/{}-{}/best_h36m_model.pth'.format(cfg.DATASET.DATASET, cfg.FILE_NAME, opt.exp_id))
-                    if gt_tot_err_3dpw <= best_err_3dpw:
-                        best_err_3dpw = gt_tot_err_3dpw
-                        torch.save(m.module.state_dict(), './exp/{}/{}-{}/best_3dpw_model.pth'.format(cfg.DATASET.DATASET, cfg.FILE_NAME, opt.exp_id))
+            # with torch.no_grad():
+            #     gt_tot_err_h36m = validate_gt(m, opt, cfg, gt_val_dataset_h36m, heatmap_to_coord)
+            #     gt_tot_err_3dpw = validate_gt(m, opt, cfg, gt_val_dataset_3dpw, heatmap_to_coord)
+            #     if opt.log:
+            #         if gt_tot_err_h36m <= best_err_h36m:
+            #             best_err_h36m = gt_tot_err_h36m
+            #             torch.save(m.module.state_dict(), './exp/{}/{}-{}/best_h36m_model.pth'.format(cfg.DATASET.DATASET, cfg.FILE_NAME, opt.exp_id))
+            #         if gt_tot_err_3dpw <= best_err_3dpw:
+            #             best_err_3dpw = gt_tot_err_3dpw
+            #             torch.save(m.module.state_dict(), './exp/{}/{}-{}/best_3dpw_model.pth'.format(cfg.DATASET.DATASET, cfg.FILE_NAME, opt.exp_id))
 
-                    logger.info(f'##### Epoch {opt.epoch} | h36m err: {gt_tot_err_h36m} / {best_err_h36m} | 3dpw err: {gt_tot_err_3dpw} / {best_err_3dpw} #####')
+            #         logger.info(f'##### Epoch {opt.epoch} | h36m err: {gt_tot_err_h36m} / {best_err_h36m} | 3dpw err: {gt_tot_err_3dpw} / {best_err_3dpw} #####')
 
         torch.distributed.barrier()  # Sync
 

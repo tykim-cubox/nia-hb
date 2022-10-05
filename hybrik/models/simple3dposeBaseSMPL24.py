@@ -9,7 +9,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
-
+import torch.cuda.comm
 from .builder import SPPE
 from .layers.Resnet import ResNet
 from .layers.smpl.SMPL import SMPL_layer

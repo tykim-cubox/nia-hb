@@ -3,7 +3,6 @@ import copy
 import json
 import os
 import pickle as pk
-
 import cv2
 import numpy as np
 import torch.utils.data as data
@@ -200,6 +199,7 @@ class H36mSMPL(data.Dataset):
 
         with open(self._ann_file, 'r') as fid:
             database = json.load(fid)
+           
         # iterate through the annotations
         bbox_scale_list = []
         det_bbox_set = {}
